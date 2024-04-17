@@ -52,6 +52,16 @@ export function fetchChatAPIProcess<T = any>(
   })
 }
 
+export interface KvStoreResponse {
+  data: string
+}
+export function fetchKvStore<T = any>(command: string) {
+  return post<T>({
+    url: '/command',
+    data: { command },
+  })
+}
+
 export function fetchSession<T>() {
   return post<T>({
     url: '/session',

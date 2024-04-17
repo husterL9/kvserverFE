@@ -5,7 +5,6 @@ import { NButton, NLayoutSider, useDialog } from 'naive-ui'
 import List from './List.vue'
 import Footer from './Footer.vue'
 import { useAppStore, useChatStore } from '@/store'
-import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { PromptStore, SvgIcon } from '@/components/common'
 import { t } from '@/locales'
 
@@ -14,7 +13,7 @@ const chatStore = useChatStore()
 
 const dialog = useDialog()
 
-const { isMobile } = useBasicLayout()
+const isMobile = ref(false)
 const show = ref(false)
 
 const collapsed = computed(() => appStore.siderCollapsed)
@@ -76,7 +75,7 @@ watch(
 
 <template>
   <NLayoutSider
-    :collapsed="collapsed"
+    :collapsed="true"
     :collapsed-width="0"
     :width="260"
     :show-trigger="isMobile ? false : 'arrow-circle'"

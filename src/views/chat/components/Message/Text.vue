@@ -4,7 +4,6 @@ import MarkdownIt from 'markdown-it'
 import mdKatex from '@traptitech/markdown-it-katex'
 import mila from 'markdown-it-link-attributes'
 import hljs from 'highlight.js'
-import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 import { copyToClip } from '@/utils/copy'
 
@@ -18,7 +17,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { isMobile } = useBasicLayout()
+const isMobile = ref(false)
 
 const textRef = ref<HTMLElement>()
 
