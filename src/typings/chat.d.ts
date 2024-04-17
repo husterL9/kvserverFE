@@ -1,6 +1,7 @@
 declare namespace Chat {
 
 	interface Chat {
+		isMe?:boolean
 		dateTime: string
 		text: string
 		inversion?: boolean

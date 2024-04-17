@@ -11,9 +11,9 @@ import { useChat } from './hooks/useChat'
 import { useUsingContext } from './hooks/useUsingContext'
 import HeaderComponent from './components/Header/index.vue'
 import { HoverButton, SvgIcon } from '@/components/common'
-import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore } from '@/store'
-import { fetchChatAPIProcess } from '@/api'
+import type { KvStoreResponse } from '@/api'
+import { fetchChatAPIProcess, fetchKvStore } from '@/api'
 import { t } from '@/locales'
 
 let controller = new AbortController()
@@ -26,7 +26,7 @@ const ms = useMessage()
 
 const chatStore = useChatStore()
 
-const { isMobile } = useBasicLayout()
+const isMobile = ref(false)
 const { addChat, updateChat, updateChatSome, getChatByUuidAndIndex } = useChat()
 const { scrollRef, scrollToBottom, scrollToBottomIfAtBottom } = useScroll()
 const { usingContext, toggleUsingContext } = useUsingContext()
@@ -57,7 +57,7 @@ function handleSubmit() {
 }
 
 async function onConversation() {
-  let message = prompt.value
+  const message = prompt.value
 
   if (loading.value)
     return
@@ -72,7 +72,8 @@ async function onConversation() {
     {
       dateTime: new Date().toLocaleString(),
       text: message,
-      inversion: true,
+      isMe: true,
+      inversion: false,
       error: false,
       conversationOptions: null,
       requestOptions: { prompt: message, options: null },
@@ -101,57 +102,79 @@ async function onConversation() {
       requestOptions: { prompt: message, options: { ...options } },
     },
   )
+
   scrollToBottom()
 
   try {
-    let lastText = ''
-    const fetchChatAPIOnce = async () => {
-      await fetchChatAPIProcess<Chat.ConversationResponse>({
-        prompt: message,
-        options,
-        signal: controller.signal,
-        onDownloadProgress: ({ event }) => {
-          const xhr = event.target
-          const { responseText } = xhr
-          // Always process the final line
-          const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
-          let chunk = responseText
-          if (lastIndex !== -1)
-            chunk = responseText.substring(lastIndex)
-          try {
-            const data = JSON.parse(chunk)
-            updateChat(
-              +uuid,
-              dataSources.value.length - 1,
-              {
-                dateTime: new Date().toLocaleString(),
-                text: lastText + (data.text ?? ''),
-                inversion: false,
-                error: false,
-                loading: true,
-                conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
-                requestOptions: { prompt: message, options: { ...options } },
-              },
-            )
-
-            if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
-              options.parentMessageId = data.id
-              lastText = data.text
-              message = ''
-              return fetchChatAPIOnce()
-            }
-
-            scrollToBottomIfAtBottom()
-          }
-          catch (error) {
-            //
-          }
+    const lastText = ''
+    const fetchKvResult = async () => {
+      const data = await fetchKvStore<KvStoreResponse>(message)
+      const { message: text } = data
+      updateChat(
+        +uuid,
+        dataSources.value.length - 1,
+        {
+          dateTime: new Date().toLocaleString(),
+          text: lastText + (text ?? ''),
+          inversion: false,
+          error: false,
+          loading: true,
+          // conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
+          requestOptions: { prompt: message, options: { ...options } },
         },
-      })
+      )
+      scrollToBottomIfAtBottom()
       updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
     }
+    await fetchKvResult()
 
-    await fetchChatAPIOnce()
+    // const fetchChatAPIOnce = async () => {
+    //   await fetchChatAPIProcess<Chat.ConversationResponse>({
+    //     prompt: message,
+    //     options,
+    //     signal: controller.signal,
+    //     onDownloadProgress: ({ event }) => {
+    //       const xhr = event.target
+    //       const { responseText } = xhr
+    //       // Always process the final line
+    //       const lastIndex = responseText.lastIndexOf('\n', responseText.length - 2)
+    //       let chunk = responseText
+    //       if (lastIndex !== -1)
+    //         chunk = responseText.substring(lastIndex)
+    //       try {
+    //         const data = JSON.parse(chunk)
+    //         updateChat(
+    //           +uuid,
+    //           dataSources.value.length - 1,
+    //           {
+    //             dateTime: new Date().toLocaleString(),
+    //             text: lastText + (data.text ?? ''),
+    //             inversion: false,
+    //             error: false,
+    //             loading: true,
+    //             conversationOptions: { conversationId: data.conversationId, parentMessageId: data.id },
+    //             requestOptions: { prompt: message, options: { ...options } },
+    //           },
+    //         )
+
+    //         if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
+    //           options.parentMessageId = data.id
+    //           lastText = data.text
+    //           message = ''
+    //           return fetchChatAPIOnce()
+    //         }
+
+    //         scrollToBottomIfAtBottom()
+    //       }
+    //       catch (error) {
+    //         //
+    //       }
+    //     },
+    //   })
+    //   updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
+    // }
+
+    // await fetchChatAPIOnce()
   }
   catch (error: any) {
     const errorMessage = error?.message ?? t('common.wrong')
@@ -489,6 +512,7 @@ onUnmounted(() => {
               <Message
                 v-for="(item, index) of dataSources"
                 :key="index"
+                :is-me="item.isMe"
                 :date-time="item.dateTime"
                 :text="item.text"
                 :inversion="item.inversion"

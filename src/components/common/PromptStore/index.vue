@@ -5,7 +5,6 @@ import { NButton, NCard, NDataTable, NDivider, NInput, NList, NListItem, NModal,
 import PromptRecommend from '../../../assets/recommend.json'
 import { SvgIcon } from '..'
 import { usePromptStore } from '@/store'
-import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { t } from '@/locales'
 
 interface DataProps {
@@ -42,7 +41,7 @@ const exportLoading = ref(false)
 const searchValue = ref<string>('')
 
 // 移动端自适应相关
-const { isMobile } = useBasicLayout()
+const isMobile = ref(false)
 
 const promptStore = usePromptStore()
 

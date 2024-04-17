@@ -6,12 +6,12 @@ import TextComponent from './Text.vue'
 import { SvgIcon } from '@/components/common'
 import { useIconRender } from '@/hooks/useIconRender'
 import { t } from '@/locales'
-import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { copyToClip } from '@/utils/copy'
 
 interface Props {
   dateTime?: string
   text?: string
+  isMe?: boolean
   inversion?: boolean
   error?: boolean
   loading?: boolean
@@ -26,7 +26,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<Emit>()
 
-const { isMobile } = useBasicLayout()
+const isMobile = ref(false)
 
 const { iconRender } = useIconRender()
 
@@ -102,7 +102,7 @@ async function handleCopy() {
       class="flex items-center justify-center flex-shrink-0 h-8 overflow-hidden rounded-full basis-8"
       :class="[inversion ? 'ml-2' : 'mr-2']"
     >
-      <AvatarComponent :image="inversion" />
+      <AvatarComponent :image="isMe" />
     </div>
     <div class="overflow-hidden text-sm " :class="[inversion ? 'items-end' : 'items-start']">
       <p class="text-xs text-[#b4bbc4]" :class="[inversion ? 'text-right' : 'text-left']">
@@ -122,7 +122,7 @@ async function handleCopy() {
         />
         <div class="flex flex-col">
           <button
-            v-if="!inversion"
+            v-if="false"
             class="mb-2 transition text-neutral-300 hover:text-neutral-800 dark:hover:text-neutral-300"
             @click="handleRegenerate"
           >
